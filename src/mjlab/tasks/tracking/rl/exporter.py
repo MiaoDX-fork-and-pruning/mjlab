@@ -8,6 +8,7 @@ from mjlab.entity import Entity
 from mjlab.envs import ManagerBasedRlEnv
 from mjlab.envs.mdp.actions.joint_actions import JointAction
 from mjlab.tasks.tracking.mdp import MotionCommand
+from mjlab.tasks.onnx_export import export_policy_module_to_onnx
 from mjlab.third_party.isaaclab.isaaclab_rl.rsl_rl.exporter import _OnnxPolicyExporter
 
 
@@ -55,16 +56,12 @@ class _OnnxMotionPolicyExporter(_OnnxPolicyExporter):
     )
 
   def export(self, path, filename):
-    self.to("cpu")
     obs = torch.zeros(1, self.actor[0].in_features)
     time_step = torch.zeros(1, 1)
-    torch.onnx.export(
+    export_policy_module_to_onnx(
       self,
       (obs, time_step),
       os.path.join(path, filename),
-      export_params=True,
-      opset_version=11,
-      verbose=self.verbose,
       input_names=["obs", "time_step"],
       output_names=[
         "actions",
@@ -76,6 +73,8 @@ class _OnnxMotionPolicyExporter(_OnnxPolicyExporter):
         "body_ang_vel_w",
       ],
       dynamic_axes={},
+      opset_version=11,
+      verbose=self.verbose,
     )
 
 
